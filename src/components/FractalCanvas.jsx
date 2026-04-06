@@ -29,7 +29,7 @@ export default function FractalCanvas() {
     const ctx = canvas.getContext('2d');
     const width = canvas.width;
     const height = canvas.height;
-    const { xMin, xMax, yMin, yMax, maxIterations, palette, mode, juliaC } = state;
+    const { xMin, xMax, yMin, yMax, maxIterations, palette, colorMode, mode, juliaC } = state;
 
     renderIdRef.current++;
     const currentRenderId = renderIdRef.current;
@@ -63,11 +63,11 @@ export default function FractalCanvas() {
 
       worker.postMessage({
         width, height, xMin, xMax, yMin, yMax,
-        maxIterations, palette, mode, juliaC,
+        maxIterations, palette, colorMode, mode, juliaC,
         startRow, endRow, id: currentRenderId,
       });
     });
-  }, [state.xMin, state.xMax, state.yMin, state.yMax, state.maxIterations, state.palette, state.mode, state.juliaC, dispatch]);
+  }, [state.xMin, state.xMax, state.yMin, state.yMax, state.maxIterations, state.palette, state.colorMode, state.mode, state.juliaC, dispatch]);
 
   // Resize canvas
   useEffect(() => {

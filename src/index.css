@@ -147,3 +147,26 @@ input[type="range"]::-moz-range-thumb {
   color: rgba(200, 210, 254, 0.8);
   letter-spacing: 0.02em;
 }
+
+/* Coordinate input */
+.coord-input {
+  flex: 1;
+  background: rgba(10, 10, 25, 0.6);
+  border: 1px solid rgba(99, 102, 241, 0.25);
+  border-radius: 6px;
+  padding: 5px 8px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: #e2e8f0;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.coord-input:focus {
+  border-color: #6366f1;
+  box-shadow: 0 0 10px rgba(99, 102, 241, 0.25);
+}
+
+.coord-input::placeholder {
+  color: rgba(255, 255, 255, 0.2);
+}

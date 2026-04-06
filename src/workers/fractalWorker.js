@@ -38,18 +38,10 @@ const palettes = {
   },
 };
 
-function getColor(iterations, maxIterations, palette) {
-  if (iterations >= maxIterations) return [0, 0, 0];
-  // Smooth coloring
-  const t = (iterations % 256) / 256;
-  const fn = palettes[palette] || palettes.classic;
-  return fn(t);
-}
-
 function computeFractal(data) {
   const {
     width, height, xMin, xMax, yMin, yMax,
-    maxIterations, palette, mode, juliaC,
+    maxIterations, palette, colorMode, mode, juliaC,
     startRow, endRow, id
   } = data;
 
@@ -57,6 +49,9 @@ function computeFractal(data) {
   const pixels = new Uint8ClampedArray(width * rowCount * 4);
   const dx = (xMax - xMin) / width;
   const dy = (yMax - yMin) / height;
+  const isOrbitTrap = colorMode && colorMode.startsWith('orbit');
+  const trapRadius = 0.5;
+  const colorFn = palettes[palette] || palettes.classic;
 
   for (let py = startRow; py < endRow; py++) {
     for (let px = 0; px < width; px++) {
@@ -81,24 +76,53 @@ function computeFractal(data) {
       let zx2 = zx * zx;
       let zy2 = zy * zy;
 
+      // Orbit trap tracking
+      let minDistCircle = Infinity;
+      let minDistCross = Infinity;
+      let minDistPoint = Infinity;
+
       while (zx2 + zy2 <= 4 && iterations < maxIterations) {
         zy = 2 * zx * zy + cy;
         zx = zx2 - zy2 + cx;
         zx2 = zx * zx;
         zy2 = zy * zy;
         iterations++;
+
+        if (isOrbitTrap) {
+          const dist = Math.sqrt(zx2 + zy2);
+          minDistPoint = Math.min(minDistPoint, dist);
+          minDistCircle = Math.min(minDistCircle, Math.abs(dist - trapRadius));
+          minDistCross = Math.min(minDistCross, Math.min(Math.abs(zx), Math.abs(zy)));
+        }
       }
 
-      // Smooth iteration count
-      let smoothIter = iterations;
-      if (iterations < maxIterations) {
+      let r, g, b, t;
+      const idx = ((py - startRow) * width + px) * 4;
+
+      if (isOrbitTrap) {
+        // Orbit traps color everything including in-set points
+        if (colorMode === 'orbit-circle') {
+          t = 1 - Math.min(1, minDistCircle * 4);
+        } else if (colorMode === 'orbit-cross') {
+          t = 1 - Math.min(1, minDistCross * 4);
+        } else {
+          t = 1 - Math.min(1, minDistPoint / 2);
+        }
+        [r, g, b] = colorFn(t);
+      } else if (iterations >= maxIterations) {
+        r = 0; g = 0; b = 0;
+      } else if (colorMode === 'bands') {
+        t = (iterations % 32) / 32;
+        [r, g, b] = colorFn(t);
+      } else {
+        // Smooth coloring (default) — continuous iteration count
         const log2 = Math.log(2);
         const logZn = Math.log(zx2 + zy2) / 2;
-        smoothIter = iterations + 1 - Math.log(logZn / log2) / log2;
+        const smoothIter = iterations + 1 - Math.log(logZn / log2) / log2;
+        t = (smoothIter % 48) / 48;
+        [r, g, b] = colorFn(t);
       }
 
-      const [r, g, b] = getColor(smoothIter, maxIterations, palette);
-      const idx = ((py - startRow) * width + px) * 4;
       pixels[idx] = r;
       pixels[idx + 1] = g;
       pixels[idx + 2] = b;
