@@ -10,6 +10,8 @@ const PALETTES = [
   { id: 'neon', label: 'Neon', colors: ['#ff00ff', '#00ffff', '#ffff00'] },
   { id: 'grayscale', label: 'Gray', colors: ['#333333', '#888888', '#cccccc'] },
   { id: 'custom', label: 'Indigo', colors: ['#6366f1', '#a78bfa', '#ec4899'] },
+  { id: 'rainbow', label: 'Rainbow', colors: ['#ff0000', '#00ff00', '#0000ff'] },
+  { id: 'psychedelic', label: 'Psyche', colors: ['#ff00ff', '#ff8800', '#00ffff'] },
 ];
 
 const COLOR_MODES = [
@@ -181,7 +183,7 @@ export default function ControlPanel() {
         <input
           type="range"
           min={50}
-          max={2000}
+          max={5000}
           step={10}
           value={state.maxIterations}
           onChange={(e) => dispatch({ type: 'SET_MAX_ITERATIONS', payload: parseInt(e.target.value) })}

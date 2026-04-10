@@ -36,6 +36,19 @@ const palettes = {
     const b = Math.floor(241 - t * 100);
     return [r, g, b];
   },
+  rainbow: (t) => {
+    const angle = t * Math.PI * 6;
+    const r = Math.floor(Math.sin(angle) * 127 + 128);
+    const g = Math.floor(Math.sin(angle + 2.094) * 127 + 128);
+    const b = Math.floor(Math.sin(angle + 4.189) * 127 + 128);
+    return [r, g, b];
+  },
+  psychedelic: (t) => {
+    const r = Math.floor(Math.sin(t * 15) * 127 + 128);
+    const g = Math.floor(Math.sin(t * 13 + 2) * 127 + 128);
+    const b = Math.floor(Math.sin(t * 11 + 4) * 127 + 128);
+    return [r, g, b];
+  },
 };
 
 function computeFractal(data) {
