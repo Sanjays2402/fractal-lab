@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { useFractal } from '../context/FractalContext';
+import { useFractal, TOUR_PRESETS } from '../context/FractalContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import JuliaSelector from './JuliaSelector';
 
@@ -12,18 +12,25 @@ const PALETTES = [
   { id: 'custom', label: 'Indigo', colors: ['#6366f1', '#a78bfa', '#ec4899'] },
   { id: 'rainbow', label: 'Rainbow', colors: ['#ff0000', '#00ff00', '#0000ff'] },
   { id: 'psychedelic', label: 'Psyche', colors: ['#ff00ff', '#ff8800', '#00ffff'] },
+  { id: 'lava',    label: 'Lava',    colors: ['#2a0000', '#ff6600', '#ffcc33'] },
+  { id: 'aurora',  label: 'Aurora',  colors: ['#0d1f2d', '#44cc99', '#66ccff'] },
+  { id: 'nebula',  label: 'Nebula',  colors: ['#1a0033', '#ff3399', '#66ccff'] },
+  { id: 'matrix',  label: 'Matrix',  colors: ['#000000', '#00ff41', '#003300'] },
+  { id: 'ice',     label: 'Ice',     colors: ['#b3e5ff', '#e0f7ff', '#ffffff'] },
+  { id: 'sunset',  label: 'Sunset',  colors: ['#ff9966', '#ff5e62', '#ffd194'] },
 ];
 
 const COLOR_MODES = [
   { id: 'smooth', label: 'Smooth' },
   { id: 'bands', label: 'Bands' },
+  { id: 'histogram', label: 'Normal' },
   { id: 'orbit-circle', label: 'Orbit ◯' },
   { id: 'orbit-cross', label: 'Orbit ✚' },
   { id: 'orbit-point', label: 'Orbit •' },
 ];
 
 export default function ControlPanel() {
-  const { state, dispatch } = useFractal();
+  const { state, dispatch, getShareURL } = useFractal();
   const [coordRe, setCoordRe] = useState('');
   const [coordIm, setCoordIm] = useState('');
   const [showCoordSearch, setShowCoordSearch] = useState(false);
@@ -147,21 +154,27 @@ export default function ControlPanel() {
       {/* Mode toggle */}
       <div className="mb-4">
         <label className="text-[10px] uppercase tracking-wider block mb-1.5" style={{ color: 'rgba(129,140,248,0.7)' }}>
-          Mode
+          Fractal
         </label>
-        <div className="flex gap-1.5">
-          {['mandelbrot', 'julia'].map(m => (
+        <div className="grid grid-cols-2 gap-1.5">
+          {[
+            { id: 'mandelbrot', label: 'Mandelbrot' },
+            { id: 'julia', label: 'Julia' },
+            { id: 'burning-ship', label: 'Burning Ship' },
+            { id: 'tricorn', label: 'Tricorn' },
+            { id: 'phoenix', label: 'Phoenix' },
+          ].map(m => (
             <button
-              key={m}
-              onClick={() => dispatch({ type: 'SET_MODE', payload: m })}
-              className="btn-glow flex-1 text-[11px] capitalize"
-              style={state.mode === m ? {
+              key={m.id}
+              onClick={() => dispatch({ type: 'SET_MODE', payload: m.id })}
+              className="btn-glow text-[11px]"
+              style={state.mode === m.id ? {
                 background: 'rgba(99, 102, 241, 0.2)',
                 borderColor: '#6366f1',
                 boxShadow: '0 0 12px rgba(99, 102, 241, 0.3)',
               } : {}}
             >
-              {m}
+              {m.label}
             </button>
           ))}
         </div>
@@ -387,6 +400,66 @@ export default function ControlPanel() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* ── NEW: Palette Shift + Invert controls */}
+      <div className="mt-3 mb-3">
+        <div className="flex justify-between items-center mb-1.5">
+          <label className="text-[10px] uppercase tracking-wider" style={{ color: 'rgba(129,140,248,0.7)' }}>
+            Palette Shift
+          </label>
+          <span className="font-mono text-[11px]" style={{ color: '#818cf8' }}>
+            {(state.paletteShift * 100).toFixed(0)}%
+          </span>
+        </div>
+        <input type="range" min={0} max={1} step={0.01} value={state.paletteShift}
+          onChange={(e) => dispatch({ type: 'SET_PALETTE_SHIFT', payload: parseFloat(e.target.value) })}
+          className="w-full" />
+        <button
+          onClick={() => dispatch({ type: 'SET_INVERT_PALETTE', payload: !state.invertPalette })}
+          className="btn-glow w-full text-[10px] mt-2"
+          style={state.invertPalette ? { background: 'rgba(99,102,241,0.2)', borderColor: '#6366f1' } : {}}>
+          {state.invertPalette ? '◑ Palette Inverted' : '○ Invert Palette'}
+        </button>
+      </div>
+
+      {/* ── NEW: Guided Tour preset gallery */}
+      <div className="mb-3">
+        <label className="text-[10px] uppercase tracking-wider block mb-1.5" style={{ color: 'rgba(129,140,248,0.7)' }}>
+          Tour
+        </label>
+        <div className="flex flex-col gap-1" style={{ maxHeight: 180, overflowY: 'auto' }}>
+          {TOUR_PRESETS.map((p, i) => (
+            <button key={i}
+              onClick={() => dispatch({ type: 'LOAD_TOUR_PRESET', payload: p })}
+              className="btn-glow text-[10px] text-left"
+              style={{ padding: '5px 8px' }}>
+              ✨ {p.name}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* ── NEW: Share + Screenshot actions */}
+      <div className="mb-3 grid grid-cols-2 gap-1.5">
+        <button onClick={async () => {
+          try {
+            await navigator.clipboard.writeText(getShareURL());
+            alert('🔗 Share URL copied to clipboard');
+          } catch { prompt('Copy this share URL:', getShareURL()); }
+        }} className="btn-glow text-[10px]">
+          🔗 Share
+        </button>
+        <button onClick={() => {
+          const c = document.querySelector('canvas');
+          if (!c) return;
+          const link = document.createElement('a');
+          link.download = `fractal-${state.mode}-${Date.now()}.png`;
+          link.href = c.toDataURL('image/png');
+          link.click();
+        }} className="btn-glow text-[10px]">
+          📸 PNG
+        </button>
+      </div>
 
       {/* Help */}
       <div className="mt-5 text-[9px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.2)' }}>
